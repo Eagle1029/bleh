@@ -14,25 +14,9 @@ jobs:
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
         Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
 
-    - name: Download cloudflared
-      run: Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
-
-    - name: Create config directory
-      run: mkdir .cloudflared
-
-    - name: Write Tunnel Config
+    - name: start
       run: |
-        Set-Content -Path ".cloudflared\config.yml" -Value @"
-tunnel: ${{ secrets.CF_TUNNEL_ID }}
-credentials-file: ${GITHUB_WORKSPACE}\.cloudflared\${{ secrets.CF_TUNNEL_ID }}.json
-ingress:
-  - hostname: rdp.${{ secrets.CF_DOMAIN }}
-    service: rdp://localhost:3389
-  - service: http_status:404
-    - name: Add Tunnel Credentials
-      run: |
-        $json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.CF_TUNNEL_CREDS_B64 }}"))
-        Set-Content -Path ".cloudflared\${{ secrets.CF_TUNNEL_ID }}.json" -Value $json
-
-    - name: Start Cloudflare Tunnel
-      run: .\cloudflared.exe tunnel run
+        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi" -OutFile "cloudflared.msi"
+        Start-Process msiexec.exe -ArgumentList "/i cloudflared.msi /quiet /norestart" -Wait
+        Start-Sleep -Seconds 3
+        Start-Process -FilePath "C:\Program Files\Cloudflare\Cloudflared\cloudflared.exe" -ArgumentList 'service install eyJhIjoiMj...' -Wait -NoNewWindow
