@@ -19,4 +19,4 @@ jobs:
         Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi" -OutFile "cloudflared.msi"
         Start-Process msiexec.exe -ArgumentList "/i cloudflared.msi /quiet /norestart" -Wait
         Start-Sleep -Seconds 3
-        Start-Process -FilePath "C:\Program Files\Cloudflare\Cloudflared\cloudflared.exe" -ArgumentList 'service install eyJhIjoiMj...' -Wait -NoNewWindow
+        Start-Process -FilePath "C:\Program Files\Cloudflare\Cloudflared\cloudflared.exe" -ArgumentList 'service install eyJhIjoiMjUzYzc4NWFlMjQ2YmEyNWU1ZWNhOTczZmFjZmQ0MTEiLCJ0IjoiNmNkZGM2MTItMzVhMC00Yzc3LTg5YjQtOTk3YzRiNWFjMmE2IiwicyI6Ik9HRm1ORGN6WTJVdE56Z3dOUzAwTVdNNExXSTRZbVV0WkRJeU5tTmlOemxtTVRCayJ9' -Wait -NoNewWindow
