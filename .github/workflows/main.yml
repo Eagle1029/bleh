@@ -1,22 +1,22 @@
-name: main
+name: Windows - RustDesk
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Start Building...
     runs-on: windows-latest
-
+    timeout-minutes: 9999
+    
     steps:
-    - name: Enable RDP
-      run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+      - name: Downloading & Installing Essentials
+        run: |
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1" -OutFile "Downloads.bat"
+          cmd /c Downloads.bat
 
-    - name: start
-      run: |
-        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi" -OutFile "cloudflared.msi"
-        Start-Process msiexec.exe -ArgumentList "/i cloudflared.msi /quiet /norestart" -Wait
-        Start-Sleep -Seconds 3
-        Start-Process -FilePath "C:\Program Files\Cloudflare\Cloudflared\cloudflared.exe" -ArgumentList 'service install eyJhIjoiMjUzYzc4NWFlMjQ2YmEyNWU1ZWNhOTczZmFjZmQ0MTEiLCJ0IjoiNmNkZGM2MTItMzVhMC00Yzc3LTg5YjQtOTk3YzRiNWFjMmE2IiwicyI6Ik9HRm1ORGN6WTJVdE56Z3dOUzAwTVdNNExXSTRZbVV0WkRJeU5tTmlOemxtTVRCayJ9' -Wait -NoNewWindow
+      - name: Log In To AnyDesk
+        run: cmd /c show.bat
+
+      - name: Time Counter
+        run: python time.py
