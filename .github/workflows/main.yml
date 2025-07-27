@@ -4,22 +4,35 @@ on: workflow_dispatch
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - name: Download Ngrok
-      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-    - name: Extract Ngrok Archive
-      run: Expand-Archive ngrok.zip
-    - name: Auth
-      run: .\ngrok\ngrok.exe authtoken 2n1cFoOwowofLCxSz0VLZy7e1N4_3bahbxn8JkJ8cy1NVjUgs
-      env:
-        NGROK_AUTH_TOKEN: 2n1cFoOwowofLCxSz0VLZy7e1N4_3bahbxn8JkJ8cy1NVjUgs
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-    - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389
+    - name: Enable RDP
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+    - name: Download cloudflared
+      run: Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
+
+    - name: Create config directory
+      run: mkdir .cloudflared
+
+    - name: Write Tunnel Config
+      run: |
+        Set-Content -Path ".cloudflared\config.yml" -Value @"
+tunnel: ${{ secrets.CF_TUNNEL_ID }}
+credentials-file: ${GITHUB_WORKSPACE}\.cloudflared\${{ secrets.CF_TUNNEL_ID }}.json
+ingress:
+  - hostname: rdp.${{ secrets.CF_DOMAIN }}
+    service: rdp://localhost:3389
+  - service: http_status:404
+    - name: Add Tunnel Credentials
+      run: |
+        $json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.CF_TUNNEL_CREDS_B64 }}"))
+        Set-Content -Path ".cloudflared\${{ secrets.CF_TUNNEL_ID }}.json" -Value $json
+
+    - name: Start Cloudflare Tunnel
+      run: .\cloudflared.exe tunnel run
