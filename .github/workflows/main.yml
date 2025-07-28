@@ -17,4 +17,4 @@ jobs:
       - name: Log In To AnyDesk
         run: cmd /c show.bat
       - name: run forever
-        run: cmd /c :loop & timeout /t 99999 >nul & goto loop
+        run: while ($true) { Start-Sleep -Seconds 99999 }
